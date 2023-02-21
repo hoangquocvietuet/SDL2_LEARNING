@@ -2,14 +2,27 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include "ball.h"
-#include <windows.h>
+#include <random>
+#include <chrono>
+#include <thread>
 
 const int WINDOW_WIDTH = 960;
 const int WINDOW_HEIGHT = 780;
+const int JUMP_PIXEL = 10;
 int dir[4] = {0, 0, 0, 0}; // UP, DOWN, RIGHT, LEFT
+int coor_x = 0, coor_y = 0;
 
 SDL_Window* myWindow = NULL;
 SDL_Renderer* myRenderer = NULL;
+Ball* myBall = NULL;
+
+std::mt19937_64 rng(std::chrono::system_clock::now().time_since_epoch().count());
+int randnum(int l, int r) {
+    l = (l + JUMP_PIXEL - 1) / JUMP_PIXEL;
+    r = r / JUMP_PIXEL;
+    int value = std::uniform_int_distribution<int>(l, r)(rng); 
+    return value * JUMP_PIXEL;
+}
 
 bool init() {
     bool success = true;
@@ -52,16 +65,19 @@ int main(int argc, char* argv[]) {
     if (!init()) {
         printf("failed to init\n");
     } else {
-        Ball* myBall = new Ball();
+        myBall = new Ball();
         myBall->loadTextureFromFile("ball.png", myRenderer);
         bool quit = false;
-        SDL_Event e;
-        int coor_x = 0, coor_y = WINDOW_HEIGHT - myBall->getHeight();
+        SDL_Event e;        
+        int hole_x = randnum(0, WINDOW_WIDTH - myBall->getWidth()), hole_y = randnum(0, WINDOW_HEIGHT - myBall->getHeight());
+        // printf("%d %d\n", hole_x, hole_y);
         while (!quit) { 
             SDL_SetRenderDrawColor(myRenderer, 0, 0, 0, 255);
 			SDL_RenderClear(myRenderer);
             myBall->render(coor_x, coor_y, myRenderer);
+            myBall->render(hole_x, hole_y, myRenderer);
             SDL_RenderPresent(myRenderer);
+            std::this_thread::sleep_for(std::chrono::milliseconds(11));
             while (SDL_PollEvent(&e)) {
                 if (e.type == SDL_QUIT) {
                     quit = true;
@@ -92,41 +108,45 @@ int main(int argc, char* argv[]) {
                 if (coor_y == 0) {
                     dir[0] = 0;
                     dir[1] = 1;
-                    coor_y += 20;
+                    coor_y += JUMP_PIXEL;
                 } else {
-                    coor_y -= 20;
+                    coor_y -= JUMP_PIXEL;
                 }
             } else if (dir[1]) {
                 if (coor_y == WINDOW_HEIGHT - myBall->getHeight()) {
                     dir[0] = 1;
                     dir[1] = 0;
-                    coor_y -= 20;
+                    coor_y -= JUMP_PIXEL;
                 } else {
-                    coor_y += 20;
+                    coor_y += JUMP_PIXEL;
                 }
             }
             if (dir[2]) {
-                if (coor_x == 0) {
+                if (coor_x == WINDOW_WIDTH - myBall->getWidth()) {
                     dir[2] = 0;
                     dir[3] = 1;
-                    coor_x += 20;
+                    coor_x -= JUMP_PIXEL;
                 } else {
-                    coor_x -= 20;
+                    coor_x += JUMP_PIXEL;
                 }
             } else if (dir[3]) {
-                if (coor_x == WINDOW_WIDTH - myBall->getWidth()) {
+                if (coor_x == 0) {
                     dir[2] = 1;
                     dir[3] = 0;
-                    coor_x -= 20;
+                    coor_x += JUMP_PIXEL;
                 } else {
-                    coor_x += 20;
+                    coor_x -= JUMP_PIXEL;
                 }
             }
-            // SDL_SetRenderDrawColor(myRenderer, 0, 0, 0, 0);
-            // SDL_RenderClear(myRenderer);
-            // myBall->render(coor_x, coor_y, myRenderer);
-            // SDL_RenderPresent(myRenderer);
-            Sleep(11);
+            if (coor_x == hole_x && coor_y == hole_y) {
+                myBall->loadTextureFromFile("like.png", myRenderer);
+                SDL_SetRenderDrawColor(myRenderer, 0, 0, 0, 255);
+                SDL_RenderClear(myRenderer);
+                myBall->render(50, 50, myRenderer);
+                SDL_RenderPresent(myRenderer);
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                quit = true;
+            }
         }
     }
     clear();
