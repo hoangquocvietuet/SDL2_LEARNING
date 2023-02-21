@@ -44,3 +44,11 @@ void Ball::render(int x, int y, SDL_Renderer* renderer) {
     SDL_Rect renderRect = {x, y, ballWidth, ballHeight};
     SDL_RenderCopy(renderer, ballTexture, NULL, &renderRect);
 }
+
+int Ball::getHeight() {
+    return ballHeight;
+}
+
+int Ball::getWidth() {
+    return ballWidth;
+}
