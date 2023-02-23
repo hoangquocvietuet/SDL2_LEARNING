@@ -6,15 +6,18 @@
 #include <chrono>
 #include <thread>
 
-const int WINDOW_WIDTH = 960;
-const int WINDOW_HEIGHT = 780;
+const int WINDOW_WIDTH = 640;
+const int WINDOW_HEIGHT = 960;
 const int JUMP_PIXEL = 10;
 int dir[4] = {0, 0, 0, 0}; // UP, DOWN, RIGHT, LEFT
-int coor_x = 0, coor_y = 0;
+int coor_x, coor_y = 0;
 
 SDL_Window* myWindow = NULL;
 SDL_Renderer* myRenderer = NULL;
 Ball* myBall = NULL;
+VTexture* winningImage = NULL;
+VTexture* basketballBackGround = NULL;
+VTexture* spaceImage = NULL;
 
 std::mt19937_64 rng(std::chrono::system_clock::now().time_since_epoch().count());
 int randnum(int l, int r) {
@@ -50,7 +53,46 @@ bool init() {
         }
         
     }
+    myBall = new Ball();
+    myBall->loadTextureFromFile("ball.png", myRenderer);
+    winningImage = new VTexture();
+    winningImage->loadTextureFromFile("cc.png", myRenderer);
+    basketballBackGround = new VTexture();
+    basketballBackGround->loadTextureFromFile("bg.jpg", myRenderer);
+    spaceImage = new VTexture();
+    spaceImage->loadTextureFromFile("space.png", myRenderer);
     return success;
+}
+
+void winningGame() {
+    SDL_SetRenderDrawColor(myRenderer, 0, 0, 0, 255);
+    SDL_RenderClear(myRenderer);
+    winningImage->render(0, 0, myRenderer);
+    SDL_RenderPresent(myRenderer);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+}
+
+bool isContinue() {
+    spaceImage->render(160, 480, myRenderer);
+    SDL_RenderPresent(myRenderer);
+    SDL_Event e;
+    int continued = -1;
+    while (continued == -1) {
+        if (SDL_PollEvent(&e)) {
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_SPACE) {
+                    continued = 1;
+                } else {
+                    continued = 0;
+                }
+            }
+        }
+    }
+    if (continued == 1) {
+        coor_x = coor_y = 0;
+        dir[0] = dir[1] = dir[2] = dir[3] = 0;
+    }
+    return continued;
 }
 
 void clear() {
@@ -58,6 +100,9 @@ void clear() {
     myWindow = NULL;
     SDL_DestroyRenderer(myRenderer);
     myRenderer = NULL;
+    delete winningImage; winningImage = NULL;
+    delete basketballBackGround; basketballBackGround = NULL;
+    delete spaceImage; spaceImage = NULL;
     SDL_Quit();
 }
 
@@ -65,19 +110,20 @@ int main(int argc, char* argv[]) {
     if (!init()) {
         printf("failed to init\n");
     } else {
-        myBall = new Ball();
-        myBall->loadTextureFromFile("ball.png", myRenderer);
+        coor_x = 0, coor_y = WINDOW_HEIGHT - myBall->getHeight();
         bool quit = false;
         SDL_Event e;        
-        int hole_x = randnum(0, WINDOW_WIDTH - myBall->getWidth()), hole_y = randnum(0, WINDOW_HEIGHT - myBall->getHeight());
+        // int hole_x = randnum(0, WINDOW_WIDTH - myBall->getWidth()), hole_y = randnum(0, WINDOW_HEIGHT - myBall->getHeight());
+        int hole_x = 400, hole_y = 350;
         // printf("%d %d\n", hole_x, hole_y);
         while (!quit) { 
             SDL_SetRenderDrawColor(myRenderer, 0, 0, 0, 255);
 			SDL_RenderClear(myRenderer);
+            basketballBackGround->render(0, 0, myRenderer);
             myBall->render(coor_x, coor_y, myRenderer);
             myBall->render(hole_x, hole_y, myRenderer);
             SDL_RenderPresent(myRenderer);
-            std::this_thread::sleep_for(std::chrono::milliseconds(11));
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
             while (SDL_PollEvent(&e)) {
                 if (e.type == SDL_QUIT) {
                     quit = true;
@@ -139,13 +185,8 @@ int main(int argc, char* argv[]) {
                 }
             }
             if (coor_x == hole_x && coor_y == hole_y) {
-                myBall->loadTextureFromFile("like.png", myRenderer);
-                SDL_SetRenderDrawColor(myRenderer, 0, 0, 0, 255);
-                SDL_RenderClear(myRenderer);
-                myBall->render(50, 50, myRenderer);
-                SDL_RenderPresent(myRenderer);
-                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-                quit = true;
+                winningGame();
+                quit = !isContinue();
             }
         }
     }
