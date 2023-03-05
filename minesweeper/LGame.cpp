@@ -97,6 +97,11 @@ void LGame::bfs(int row, int col) {
         qu.pop();
         assert(mCurrentGrid[u][v].mActualCellType != mineCell);
         mCurrentGrid[u][v].mCurrentCellType = mCurrentGrid[u][v].mActualCellType;
+        // delete flag when bfs
+        if (mCurrentGrid[u][v].isFlag == true) {
+            -- totalFlag;
+            mCurrentGrid[u][v].isFlag = false;
+        }
         // skip number cell
         if (mCurrentGrid[u][v].mActualCellType != emptyCell) continue;
         for (auto p : dir) {
@@ -237,6 +242,8 @@ void LGame::reset() {
             mCurrentGrid[i][j].isFlag = false;
         }
     }
+    totalFlag = 0;
+    isFirstCellClicked = true;
 }
 
 bool LGame::optionPage(bool win) {
@@ -257,7 +264,6 @@ bool LGame::optionPage(bool win) {
             SDL_GetMouseState(&clickPoint.x, &clickPoint.y);
             if (clickPoint.x >= 50 && clickPoint.x < 50 + continuing.getWidth()
              && clickPoint.y >= 150 && clickPoint.y < 150 + continuing.getHeight()) {
-                isFirstCellClicked = true;
                 reset();
                 return true;
             }
