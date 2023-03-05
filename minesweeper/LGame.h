@@ -103,6 +103,11 @@ class LGame {
         void loadGame();
 
         /*
+            reset game state
+        */
+        void reset();
+
+        /*
             running and handle game
         */
         void playGame();

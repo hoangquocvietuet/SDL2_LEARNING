@@ -42,7 +42,7 @@ bool init() {
                     printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
                     success = false;
                 }
-                gFont = TTF_OpenFont("lazy.ttf", 35);
+                gFont = TTF_OpenFont("assets/lazy.ttf", 35);
                 if(gFont == NULL) {
                     printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
                     success = false;

@@ -229,6 +229,16 @@ bool LGame::handleEvent(SDL_Event* mEvent) {
     return loseGame;
 }
 
+void LGame::reset() {
+    for (int i = 0; i < numRow; ++ i) {
+        for (int j = 0; j < numColumn; ++ j) {
+            mCurrentGrid[i][j].mCurrentCellType = defaultCell;
+            mCurrentGrid[i][j].mActualCellType = emptyCell;
+            mCurrentGrid[i][j].isFlag = false;
+        }
+    }
+}
+
 bool LGame::optionPage(bool win) {
     while (true) {
         SDL_SetRenderDrawColor(mRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -248,11 +258,7 @@ bool LGame::optionPage(bool win) {
             if (clickPoint.x >= 50 && clickPoint.x < 50 + continuing.getWidth()
              && clickPoint.y >= 150 && clickPoint.y < 150 + continuing.getHeight()) {
                 isFirstCellClicked = true;
-                for (int i = 0; i < numRow; ++ i) {
-                    for (int j = 0; j < numColumn; ++ j) {
-                        mCurrentGrid[i][j].mCurrentCellType = defaultCell;
-                    }
-                }
+                reset();
                 return true;
             }
             if (clickPoint.x >= 50 && clickPoint.x < 50 + stopping.getWidth()
@@ -267,7 +273,7 @@ bool LGame::optionPage(bool win) {
 bool LGame::checkWinGame() {
     for (int i = 0; i < numRow; ++ i) {
         for (int j = 0; j < numColumn; ++ j) {
-            if (mCurrentGrid[i][j].mCurrentCellType != mCurrentGrid[i][j].mActualCellType) {
+            if (mCurrentGrid[i][j].mActualCellType != mineCell && mCurrentGrid[i][j].mCurrentCellType != mCurrentGrid[i][j].mActualCellType) {
                 return false;
             }
         }
@@ -302,11 +308,13 @@ void LGame::playGame() {
                 if (handleEvent(&mEvent)) {
                     loadGame();
                     SDL_Delay(500);
-                    quit = !optionPage(0);   
+                    quit = !optionPage(0);  
                 }
             }
         }
         if (checkWinGame()) {
+            loadGame();
+            SDL_Delay(500);
             quit = !optionPage(1);
         }
     }
